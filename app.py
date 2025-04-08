@@ -8,7 +8,6 @@ import gdown
 import os
 import joblib
 import numpy as np
-from sklearn.pipeline import Pipeline
 
 if not os.path.exists("melhor_modelo.pkl"):
     url = "https://drive.google.com/uc?id=1JWglKM4BJxkxH5Yc2HLxcOG_gWgCUFsN"
