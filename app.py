@@ -4,10 +4,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
 from datetime import datetime
-
+import gdown
+import os
 import joblib
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+
+if not os.path.exists("melhor_modelo.pkl"):
+    url = "https://drive.google.com/uc?id=1JWglKM4BJxkxH5Yc2HLxcOG_gWgCUFsN"
+    gdown.download(url, "melhor_modelo.pkl", quiet=False)
 
 # Configuração da página
 st.set_page_config(page_title="Dashboard COVID-19", page_icon="🦠", layout="wide")
