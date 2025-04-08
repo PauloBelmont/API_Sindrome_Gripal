@@ -5,6 +5,10 @@ import seaborn as sns
 import plotly.express as px
 from datetime import datetime
 
+import joblib
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+
 # Configuração da página
 st.set_page_config(page_title="Dashboard COVID-19", page_icon="🦠", layout="wide")
 
@@ -58,11 +62,12 @@ df_filtrado = df[
 ]
 
 # Layout do dashboard
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Visão Geral", 
     "Distribuição Demográfica", 
     "Sintomas e Comorbidades",
-    "Temporalidade"
+    "Temporalidade",
+    "Previsão de Casos"
 ])
 
 with tab1:
@@ -239,7 +244,105 @@ with tab4:
         st.plotly_chart(fig10, use_container_width=True)
     else:
         st.warning("Dados sobre tempo entre sintomas e notificação não disponíveis.")
+with tab5:
+    st.header("Previsão de Casos de COVID-19")
+    st.markdown("Informe os dados do paciente para realizar a previsão")
 
+    with st.form("prediction_form"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Dados demográficos
+            idade = st.number_input("Idade", min_value=0, max_value=120, value=30)
+            sexo = st.radio("Sexo", ['Masculino', 'Feminino', 'Indefinido'])
+            profissional_saude = st.radio("Profissional de Saúde?", ['Sim', 'Não'])
+            vacinado = st.radio("Recebeu vacina?", ['Sim', 'Não', 'Ignorado'])
+            total_condicoes = st.number_input("Número de condições pré-existentes", min_value=0, max_value=10, value=0)
+            
+        with col2:
+            # Sintomas
+            dias_sintomas_notificacao = st.number_input("Dias entre sintomas e notificação", min_value=0, max_value=30, value=3)
+            febre = st.checkbox("Febre")
+            tosse = st.checkbox("Tosse")
+            dor_garganta = st.checkbox("Dor de Garganta")
+            dispneia = st.checkbox("Dificuldade Respiratória (Dispneia)")
+            disturbios_olfativos = st.checkbox("Distúrbios Olfativos")
+            disturbios_gustativos = st.checkbox("Distúrbios Gustativos")
+            dor_cabeca = st.checkbox("Dor de Cabeça")
+            coriza = st.checkbox("Coriza")
+            outros = st.checkbox("Outros Sintomas")
+            assintomatico = st.checkbox("Assintomático")
+
+        submitted = st.form_submit_button("Realizar Previsão")
+
+    if submitted:
+        try:
+            # Carregar modelo e scaler
+            model = joblib.load('melhor_modelo.pkl')
+            scaler = joblib.load('scaler.pkl')
+            
+            # Criar array de features na mesma ordem usada no treino
+            features = [
+                idade,
+                1 if profissional_saude == 'Não' else 0,
+                1 if profissional_saude == 'Sim' else 0,
+                1 if sexo == 'Feminino' else 0,
+                1 if sexo == 'Indefinido' else 0,
+                1 if sexo == 'Masculino' else 0,
+                1 if vacinado == 'Ignorado' else 0,
+                1 if vacinado == 'Não' else 0,
+                1 if vacinado == 'Sim' else 0,
+                total_condicoes,
+                dias_sintomas_notificacao,
+                dor_garganta,
+                coriza,
+                outros,
+                dispneia,
+                disturbios_olfativos,
+                assintomatico,
+                disturbios_gustativos,
+                febre,
+                tosse,
+                dor_cabeca
+            ]
+            
+            # Aplicar scaler
+            features_scaled = scaler.transform([features])
+            
+            # Fazer previsão
+            prediction = model.predict(features_scaled)
+            proba = model.predict_proba(features_scaled)
+            
+            # Exibir resultados
+            st.subheader("Resultado da Previsão:")
+            classe_predita = prediction[0]
+            confianca = np.max(proba[0]) * 100
+            
+            if classe_predita == 'Confirmado':
+                st.error(f"**Resultado:** {classe_predita} (Confiança: {confianca:.1f}%)")
+            else:
+                st.success(f"**Resultado:** {classe_predita} (Confiança: {confianca:.1f}%)")
+            
+            # Explicação da previsão
+            st.markdown("### Fatores mais relevantes para a decisão:")
+            importances = model.feature_importances_
+            feature_names = [
+                'Idade', 'Profissional Saúde Não', 'Profissional Saúde Sim', 
+                'Sexo Feminino', 'Sexo Indefinido', 'Sexo Masculino', 
+                'Vacina Ignorado', 'Vacina Não', 'Vacina Sim', 'Total Condições',
+                'Dias Sintomas/Notificação', 'Dor Garganta', 'Coriza', 'Outros',
+                'Dispneia', 'Distúrbios Olfativos', 'Assintomático', 
+                'Distúrbios Gustativos', 'Febre', 'Tosse', 'Dor Cabeça'
+            ]
+            
+            # Ordenar importâncias
+            indices = np.argsort(importances)[::-1][:5]  # Top 5 features
+            st.write("Principais fatores que influenciaram a previsão:")
+            for i in indices:
+                st.write(f"- {feature_names[i]} ({importances[i]*100:.1f}%)")
+                
+        except Exception as e:
+            st.error(f"Erro na previsão: {str(e)}")
 # Rodapé
 st.markdown("---")
 st.markdown("Dashboard desenvolvido para análise de dados de COVID-19 e síndromes gripais")
