@@ -10,23 +10,26 @@ import numpy as np
 # -----------------------------------------------------------------------------
 # Configuração inicial e download do modelo (se necessário)
 # -----------------------------------------------------------------------------
-if not os.path.exists("melhor_modelo.pkl"):
+if not os.path.exists("modelos/melhor_modelo.pkl"):
     url = "https://drive.google.com/uc?id=1JWglKM4BJxkxH5Yc2HLxcOG_gWgCUFsN"
-    gdown.download(url, "melhor_modelo.pkl", quiet=False)
+    gdown.download(url, "modelos/melhor_modelo.pkl", quiet=False)
+if not os.path.exists("modelos/scaler.pkl"):
+    url = "https://drive.google.com/uc?id=1c72HtyYTCMLXw95NNpo9-LjEHRhVstKX"
+    gdown.download(url, "modelos/scaler.pkl", quiet=False)
 
 st.set_page_config(page_title="NotificaRR",
-                   page_icon="🦠",
+                   page_icon="Logo.png",
                    layout="wide",
                    initial_sidebar_state="collapsed")
 
 # -----------------------------------------------------------------------------
-# Controle de Modo com Toggle via Botão com Ícones no Canto Superior Direito
+# Modo Claro e Escuro
 # -----------------------------------------------------------------------------
 if "modo" not in st.session_state:
-    st.session_state["modo"] = "Noturno"
+    st.session_state["modo"] = "Diurno"
 
 def toggle_mode():
-    st.session_state["modo"] = "Diurno" if st.session_state["modo"] == "Noturno" else "Noturno"
+    st.session_state["modo"] = "Noturno" if st.session_state["modo"] == "Diurno" else "Diurno"
 
 cols = st.columns([10, 1])
 with cols[1]:
@@ -35,22 +38,28 @@ with cols[1]:
 modo = st.session_state["modo"]
 
 # -----------------------------------------------------------------------------
-# Definição de Cores e Estilos conforme o Modo (Atualizado)
+# Estilização
 # -----------------------------------------------------------------------------
+
+
 if modo == "Noturno":
     bg_color = "#1e1e2f"
-    text_color = "#ffffff"  # Branco para melhor contraste
+    text_color = "#ffffff"
     confirmados_color = "#0072BB"
-    sg_ne_especial_color = "#50C878"
     descartados_color = "#ff7c7c"
+    sg_ne_especial_color = "#50C878"
     grid_color = "#4a4a4a"
+    button_bg = "#2d2d44"
+    button_hover = "#3e3e5e"
 else:
     bg_color = "#ffffff"
-    text_color = "#2c2c2c"   # Cinza escuro para melhor legibilidade
+    text_color = "#2c2c2c"
     confirmados_color = "#005A8F"
-    sg_ne_especial_color = "#3AA17E"
     descartados_color = "#cc5c5c"
+    sg_ne_especial_color = "#3AA17E"
     grid_color = "#e0e0e0"
+    button_bg = "#f0f0f0"
+    button_hover = "#d6d6d6"
 
 color_map = {
     'Descartado': descartados_color,
@@ -58,21 +67,16 @@ color_map = {
     'Síndrome Gripal Não Especificada': sg_ne_especial_color
 }
 
-# -----------------------------------------------------------------------------
-# CSS Global Atualizado
-# -----------------------------------------------------------------------------
 st.markdown(f"""
 <style>
 body {{ color: {text_color}; }}
 .stApp {{ background-color: {bg_color}; }}
 
-/* Aplicar cor do texto para todos elementos */
 h1, h2, h3, h4, h5, h6, p, .stMarkdown, .stMetric, 
 [data-testid="stMetricLabel"], [data-testid="stMetricValue"] {{
     color: {text_color} !important;
 }}
 
-/* Abas maiores e mais visíveis */
 div[data-baseweb="tab-list"] {{
     gap: 1rem;
 }}
@@ -90,16 +94,29 @@ button[data-baseweb="tab"][aria-selected="true"] {{
     color: white !important;
 }}
 
-/* Melhoria nos filtros da sidebar */
 [data-testid="stSidebar"] label {{
     font-size: 1.1rem !important;
     color: {text_color} !important;
 }}
+
+/* Estilo do botão de modo claro/escuro */
+div.stButton > button {{
+    background-color: {button_bg} !important;
+    color: {text_color} !important;
+    border: none;
+    border-radius: 0.5rem;
+    transition: background-color 0.3s ease;
+}}
+div.stButton > button:hover {{
+    background-color: {button_hover} !important;
+}}
+
 </style>
 """, unsafe_allow_html=True)
 
+
 # -----------------------------------------------------------------------------
-# Função de Estilização de Gráficos (Atualizada)
+# Função de Estilização de Gráficos
 # -----------------------------------------------------------------------------
 def apply_chart_styling(fig):
     fig.update_layout(
@@ -127,7 +144,15 @@ def apply_chart_styling(fig):
     return fig
 
 # -----------------------------------------------------------------------------
-# Título e Subtítulo Centralizados do Dashboard
+# Título e Subtítulo
+# -----------------------------------------------------------------------------
+placeholder = st.empty()
+
+
+
+
+# -----------------------------------------------------------------------------
+# Título e Subtítulo
 # -----------------------------------------------------------------------------
 st.markdown(f"""
 <h1 style="text-align: center; font-size: 48px;">Análise de Notificações de Síndromes Gripais</h1>
@@ -160,6 +185,7 @@ df = load_data()
 # Sidebar com Filtros
 # -----------------------------------------------------------------------------
 st.sidebar.header("Filtros")
+st.sidebar.image("Logo.png", caption="NotificaRR")
 with st.sidebar:
     resultados = st.multiselect(
         "Resultado do Caso",
