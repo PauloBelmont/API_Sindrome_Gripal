@@ -11,10 +11,10 @@ import numpy as np
 # Configuração inicial e download do modelo (se necessário)
 # -----------------------------------------------------------------------------
 if not os.path.exists("modelos/melhor_modelo.pkl"):
-    url = "https://drive.google.com/uc?id=1JWglKM4BJxkxH5Yc2HLxcOG_gWwCUFsN"
+    url = "https://drive.google.com/file/d/1JWglKM4BJxkxH5Yc2HLxcOG_gWgCUFsN/view?usp=drive_link"
     gdown.download(url, "modelos/melhor_modelo.pkl", quiet=False)
 if not os.path.exists("modelos/scaler.pkl"):
-    url = "https://drive.google.com/uc?id=1c72HtyYTCMLXw95NNpo9-LjEHRhVstKX"
+    url = "https://drive.google.com/file/d/1c72HtyYTCMLXw95NNpo9-LjEHRhVstKX/view?usp=drive_link"
     gdown.download(url, "modelos/scaler.pkl", quiet=False)
 
 st.set_page_config(page_title="NotificaRR",
